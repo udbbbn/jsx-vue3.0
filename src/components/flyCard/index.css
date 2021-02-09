@@ -1,0 +1,4 @@
+.cardWrapper.animation
+	{
+		transition: opacity .4s ease-out,left .4s ease-out,top .4s ease-out,width .4s ease-out,height .4s ease-out,left .4s ease-out,right .4s ease-out;
+	}
