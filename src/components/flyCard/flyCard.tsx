@@ -1,4 +1,4 @@
-import { defineComponent, reactive, PropType, CSSProperties, h } from 'vue'
+import { defineComponent, reactive, PropType, CSSProperties, h, ref, watch, watchEffect } from 'vue'
 import './index.css'
 import cn from 'classnames'
 
@@ -17,6 +17,8 @@ function getDistance(x1, y1, x2, y2) {
     const y = Math.abs(y1 - y2)
     return Math.sqrt(x * x + y * y)
 }
+
+const defaultShowItemLength = 4
 
 export default defineComponent({
     name: 'FlyCard',
@@ -52,31 +54,62 @@ export default defineComponent({
         // 允许卡片飞的距离
         allowExecuteDistance: {
             type: Number,
-            default: 0
+            default: 50
         },
         // 卡片飞出去时的基础距离
         throwDistance: {
             type: Number,
             default: 500
         },
-        // 图片重复
+        // 图片是否重复切换
         repeat: {
             type: Boolean,
             default: false
+        },
+        // 剩余数量 x 时触发回调
+        remainNum: {
+            type: Number,
+            default: null
+        },
+        // 剩余数量为 x 时触发的回调事件
+        remainCallBack: {
+            type: Function,
+            default: null
         }
     },
     setup(props, context) {
-        const { cardType, cardWidth, cardLeftDiff, cardHeight, cardTopDiff, dragDirection, throwDistance, allowExecuteDistance, repeat } = props
+        const {
+            cardType,
+            cardWidth,
+            cardLeftDiff,
+            cardHeight,
+            cardTopDiff,
+            dragDirection,
+            throwDistance,
+            allowExecuteDistance,
+            repeat,
+            remainNum,
+            remainCallBack
+        } = props
 
         const state = reactive(props)
+        const cardIdx = ref(0)
 
-        const cardLength = state.cardImgArray.length
+        // check invalid params
+        if (!repeat) {
+            if (remainNum === null || remainCallBack === null) {
+                throw new Error('if repeat is not equal to true, the remainCallBack and remainNum must exist!')
+            }
+        }
+
+        let cardLength = state.cardImgArray.length
 
         const touchStart = reactive({ x: 0, y: 0 })
         const target = reactive({ x: 0, y: 0 })
         const infos = reactive({ animation: false })
 
-        let cards = getCard(cardWidth, cardHeight, cardLeftDiff, cardTopDiff, cardLength)
+        let cards = getCard(cardWidth, cardHeight, cardLeftDiff, cardTopDiff, defaultShowItemLength)
+        watchEffect(() => console.log(cards))
 
         function onTouchStart({ touches }: TouchEvent) {
             touchStart.x = touches[0].clientX - target.x
@@ -119,17 +152,22 @@ export default defineComponent({
                 infos.animation = false
                 target.x = 0
                 target.y = 0
-                resetCard()
+                initCard()
             }, 400)
         }
 
-        function resetCard() {
+        function initCard() {
+            ++cardIdx.value
             if (repeat) {
                 state.cardImgArray.push(state.cardImgArray.shift())
             } else {
-                state.cardImgArray.shift()
+                if (remainNum) {
+                    if (cardLength - cardIdx.value <= remainNum) {
+                        remainCallBack()
+                    }
+                }
             }
-            cards = getCard(cardWidth, cardHeight, cardLeftDiff, cardTopDiff, cardLength)
+            cards = getCard(cardWidth, cardHeight, cardLeftDiff, cardTopDiff, defaultShowItemLength)
         }
 
         return () => (
@@ -149,12 +187,18 @@ export default defineComponent({
                             class={cn('cardWrapper', {
                                 animation: infos.animation
                             })}
-                            style={{ ...defaultStyle, ...style, ...(idx === 0 ? { left: `${target.x}px`, top: `${target.y}px`, zIndex: 5 } : {}) }}
+                            style={{
+                                ...defaultStyle,
+                                ...style,
+                                ...(idx === 0 ? { left: `${target.x}px`, top: `${target.y}px`, zIndex: cardLength + 1 } : {})
+                            }}
                             onTouchstart={idx === 0 ? onTouchStart : () => {}}
                             onTouchmove={idx === 0 ? onTouchMove : () => {}}
                             onTouchend={idx === 0 ? onTouchEnd : () => {}}
                         >
-                            {cardType === 'img' && <img style={{ width: '100%', height: '100%' }} src={state.cardImgArray[idx]} alt="" />}
+                            {cardType === 'img' && (
+                                <img style={{ width: '100%', height: '100%' }} src={state.cardImgArray.slice(cardIdx.value)[idx]} alt="" />
+                            )}
                         </div>
                     ))}
                 </div>
@@ -176,5 +220,6 @@ function getCard(width, height, cardLeftDiff, cardTopDiff, cardLength) {
     new Array(cardLength).fill(1).forEach((el, idx) => {
         cards[`card-${idx}`] = getCardProperty(idx)
     })
+
     return cards
 }

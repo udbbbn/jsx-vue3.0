@@ -13,6 +13,10 @@ export default defineComponent({
         const defaultImgs = [Avatar, Keji, Cat, Napolun]
         const flyCardArr = ref([...defaultImgs])
 
+        function loadFlyCardImg() {
+            flyCardArr.value.push(...[Cat, Napolun, Keji, Avatar])
+        }
+
         return () => (
             <div class="container">
                 {/* <ElContainer>
@@ -22,7 +26,7 @@ export default defineComponent({
                     <ElMain>
                     </ElMain>
                 </ElContainer> */}
-                <FlyCard cardImgArray={[...flyCardArr.value]}></FlyCard>
+                <FlyCard cardImgArray={[...flyCardArr.value]} remainNum={3} remainCallBack={loadFlyCardImg}></FlyCard>
             </div>
         )
     }
