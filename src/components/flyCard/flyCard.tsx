@@ -1,4 +1,4 @@
-import { defineComponent, reactive, PropType, CSSProperties, ref, h } from 'vue'
+import { defineComponent, reactive, PropType, CSSProperties, h } from 'vue'
 import './index.css'
 import cn from 'classnames'
 
@@ -45,10 +45,6 @@ export default defineComponent({
             type: Number,
             default: 10
         },
-        cardLength: {
-            type: Number,
-            default: 4
-        },
         dragDirection: {
             type: String as PropType<DragDirection>,
             default: 'all'
@@ -62,19 +58,19 @@ export default defineComponent({
         throwDistance: {
             type: Number,
             default: 500
+        },
+        // 图片重复
+        repeat: {
+            type: Boolean,
+            default: false
         }
     },
     setup(props, context) {
-        const { cardType, cardImgArray, cardWidth, cardLeftDiff, cardHeight, cardTopDiff, dragDirection, throwDistance, allowExecuteDistance } = props
-        let { cardLength } = props
+        const { cardType, cardWidth, cardLeftDiff, cardHeight, cardTopDiff, dragDirection, throwDistance, allowExecuteDistance, repeat } = props
 
-        // check props valid
-        if (cardImgArray?.length !== cardLength) {
-            throw new Error('cardImgArray length must equal cardLength')
-        }
-        if (cardType === 'img' && !cardImgArray.length) {
-            throw new Error(`if cardType equal 'img', cardLength must be have`)
-        }
+        const state = reactive(props)
+
+        const cardLength = state.cardImgArray.length
 
         const touchStart = reactive({ x: 0, y: 0 })
         const target = reactive({ x: 0, y: 0 })
@@ -102,7 +98,6 @@ export default defineComponent({
 
             if (distance > allowExecuteDistance) {
                 executeCardAnimation()
-            } else {
             }
         }
 
@@ -115,12 +110,6 @@ export default defineComponent({
             target.y = Math.sin(angle) * throwDistance
 
             const keys = Object.keys(cards)
-            // keys.reverse().forEach((key, idx) => {
-            //     if (idx !== keys.length) {
-            //         console.log(key, idx, `card-${idx - 1}`)
-            //         cards[key] = { ...cards[`card-${idx - 1}`] }
-            //     }
-            // })
 
             cards[`card-${keys.length - 1}`] = { ...cards[`card-${keys.length - 2}`], opacity: 1 }
             cards[`card-2`] = { ...cards[`card-1`] }
@@ -135,9 +124,12 @@ export default defineComponent({
         }
 
         function resetCard() {
-            cardImgArray.push(cardImgArray.shift())
+            if (repeat) {
+                state.cardImgArray.push(state.cardImgArray.shift())
+            } else {
+                state.cardImgArray.shift()
+            }
             cards = getCard(cardWidth, cardHeight, cardLeftDiff, cardTopDiff, cardLength)
-            // cardLength--
         }
 
         return () => (
@@ -162,7 +154,7 @@ export default defineComponent({
                             onTouchmove={idx === 0 ? onTouchMove : () => {}}
                             onTouchend={idx === 0 ? onTouchEnd : () => {}}
                         >
-                            {cardType === 'img' && <img style={{ width: '100%', height: '100%' }} src={cardImgArray[idx]} alt="" />}
+                            {cardType === 'img' && <img style={{ width: '100%', height: '100%' }} src={state.cardImgArray[idx]} alt="" />}
                         </div>
                     ))}
                 </div>
