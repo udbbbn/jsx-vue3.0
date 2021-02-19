@@ -14,7 +14,12 @@ export default defineComponent({
         const flyCardArr = ref([...defaultImgs])
 
         function loadFlyCardImg() {
-            flyCardArr.value.push(...[Cat, Napolun, Keji, Avatar])
+            return new Promise<void>((resolve, reject) => {
+                setTimeout(() => {
+                    flyCardArr.value.push(...[Cat, Napolun, Keji, Avatar])
+                    resolve()
+                }, 3000)
+            })
         }
 
         return () => (

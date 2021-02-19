@@ -4,6 +4,9 @@ import cn from 'classnames'
 
 type CardType = 'img' | 'item'
 type DragDirection = 'all' | 'horizontal' | 'vertical'
+type DefaultTouchEvent = ({ x, y }: { x: number; y: number }) => void
+type TouchEnd = ({ x, y }: { x: number; y: number }, distance: number) => void
+type RemainCallBack<T> = () => Promise<T>
 
 const defaultStyle = {
     borderRadius: '15px',
@@ -73,7 +76,19 @@ export default defineComponent({
         },
         // 剩余数量为 x 时触发的回调事件
         remainCallBack: {
-            type: Function,
+            type: Function as PropType<RemainCallBack<any>>,
+            default: null
+        },
+        onTouchStart: {
+            type: Function as PropType<DefaultTouchEvent>,
+            default: null
+        },
+        onTouchMove: {
+            type: Function as PropType<DefaultTouchEvent>,
+            default: null
+        },
+        onTouchEnd: {
+            type: Function as PropType<TouchEnd>,
             default: null
         }
     },
@@ -109,11 +124,11 @@ export default defineComponent({
         const infos = reactive({ animation: false })
 
         let cards = getCard(cardWidth, cardHeight, cardLeftDiff, cardTopDiff, defaultShowItemLength)
-        watchEffect(() => console.log(cards))
 
         function onTouchStart({ touches }: TouchEvent) {
             touchStart.x = touches[0].clientX - target.x
             touchStart.y = touches[0].clientY - target.y
+            props.onTouchStart?.({ ...touchStart })
         }
 
         function onTouchMove({ touches }: TouchEvent) {
@@ -124,6 +139,7 @@ export default defineComponent({
             if (dragDirection === 'all' || dragDirection === 'vertical') {
                 target.y = touch.clientY - touchStart.y
             }
+            props.onTouchMove?.({ ...target })
         }
 
         function onTouchEnd() {
@@ -131,7 +147,19 @@ export default defineComponent({
 
             if (distance > allowExecuteDistance) {
                 executeCardAnimation()
+            } else {
+                undoCardAnimation()
             }
+            props.onTouchEnd?.({ ...touchStart }, distance)
+        }
+
+        function undoCardAnimation() {
+            infos.animation = true
+            target.x = 0
+            target.y = 0
+            setTimeout(() => {
+                infos.animation = false
+            }, 400)
         }
 
         function executeCardAnimation() {
@@ -160,14 +188,15 @@ export default defineComponent({
             ++cardIdx.value
             if (repeat) {
                 state.cardImgArray.push(state.cardImgArray.shift())
+                cards = getCard(cardWidth, cardHeight, cardLeftDiff, cardTopDiff, defaultShowItemLength)
             } else {
                 if (remainNum) {
                     if (cardLength - cardIdx.value <= remainNum) {
-                        remainCallBack()
+                        cards = getCard(cardWidth, cardHeight, cardLeftDiff, cardTopDiff, defaultShowItemLength)
+                        remainCallBack().then(res => {})
                     }
                 }
             }
-            cards = getCard(cardWidth, cardHeight, cardLeftDiff, cardTopDiff, defaultShowItemLength)
         }
 
         return () => (
