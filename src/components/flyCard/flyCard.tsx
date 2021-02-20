@@ -1,6 +1,7 @@
 import { defineComponent, reactive, PropType, CSSProperties, h, ref, watch, watchEffect } from 'vue'
-import './index.css'
 import cn from 'classnames'
+import { ElMain, ElLoading } from 'element-plus'
+import './index.css'
 
 type CardType = 'img' | 'item'
 type DragDirection = 'all' | 'horizontal' | 'vertical'
@@ -79,6 +80,11 @@ export default defineComponent({
             type: Function as PropType<RemainCallBack<any>>,
             default: null
         },
+        // remainCallBack 是否显示loading
+        moreLoading: {
+            type: Boolean,
+            default: false
+        },
         onTouchStart: {
             type: Function as PropType<DefaultTouchEvent>,
             default: null
@@ -103,6 +109,7 @@ export default defineComponent({
             throwDistance,
             allowExecuteDistance,
             repeat,
+            moreLoading,
             remainNum,
             remainCallBack
         } = props
@@ -116,8 +123,6 @@ export default defineComponent({
                 throw new Error('if repeat is not equal to true, the remainCallBack and remainNum must exist!')
             }
         }
-
-        let cardLength = state.cardImgArray.length
 
         const touchStart = reactive({ x: 0, y: 0 })
         const target = reactive({ x: 0, y: 0 })
@@ -188,19 +193,26 @@ export default defineComponent({
             ++cardIdx.value
             if (repeat) {
                 state.cardImgArray.push(state.cardImgArray.shift())
-                cards = getCard(cardWidth, cardHeight, cardLeftDiff, cardTopDiff, defaultShowItemLength)
             } else {
                 if (remainNum) {
-                    if (cardLength - cardIdx.value <= remainNum) {
-                        cards = getCard(cardWidth, cardHeight, cardLeftDiff, cardTopDiff, defaultShowItemLength)
-                        remainCallBack().then(res => {})
+                    if (state.cardImgArray.length - cardIdx.value < remainNum) {
+                        let loading
+                        if (moreLoading) {
+                            loading = ElLoading.service({
+                                target: 'flyCard__wrapper'
+                            })
+                        }
+                        remainCallBack().then(res => {
+                            loading?.close()
+                        })
                     }
                 }
             }
+            cards = getCard(cardWidth, cardHeight, cardLeftDiff, cardTopDiff, defaultShowItemLength)
         }
 
         return () => (
-            <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
+            <div id="flyCard__wrapper" style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
                 <div
                     style={{
                         position: 'absolute',
@@ -219,14 +231,18 @@ export default defineComponent({
                             style={{
                                 ...defaultStyle,
                                 ...style,
-                                ...(idx === 0 ? { left: `${target.x}px`, top: `${target.y}px`, zIndex: cardLength + 1 } : {})
+                                ...(idx === 0 ? { left: `${target.x}px`, top: `${target.y}px`, zIndex: state.cardImgArray.length + 1 } : {})
                             }}
                             onTouchstart={idx === 0 ? onTouchStart : () => {}}
                             onTouchmove={idx === 0 ? onTouchMove : () => {}}
                             onTouchend={idx === 0 ? onTouchEnd : () => {}}
                         >
                             {cardType === 'img' && (
-                                <img style={{ width: '100%', height: '100%' }} src={state.cardImgArray.slice(cardIdx.value)[idx]} alt="" />
+                                <img
+                                    style={{ width: '100%', height: '100%', backgroundColor: '#eee' }}
+                                    src={state.cardImgArray.slice(cardIdx.value)[idx]}
+                                    alt=""
+                                />
                             )}
                         </div>
                     ))}

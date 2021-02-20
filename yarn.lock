@@ -878,10 +878,10 @@ ee-first@1.1.1:
   resolved "https://registry.npm.taobao.org/ee-first/download/ee-first-1.1.1.tgz#590c61156b0ae2f4f0255732a158b266bc56b21d"
   integrity sha1-WQxhFWsK4vTwJVcyoViyZrxWsh0=
 
-element-plus@^1.0.1-beta.7:
-  version "1.0.1-beta.7"
-  resolved "https://registry.npm.taobao.org/element-plus/download/element-plus-1.0.1-beta.7.tgz#080d3754ead09a71cdf1dda371fc34b55e8fc8ef"
-  integrity sha1-CA03VOrQmnHN8d2jcfw0tV6PyO8=
+element-plus@^1.0.2-beta.32:
+  version "1.0.2-beta.32"
+  resolved "https://registry.npm.taobao.org/element-plus/download/element-plus-1.0.2-beta.32.tgz#228975cfc2255993ef7ccd90238cea9a707f0742"
+  integrity sha1-Iol1z8IlWZPvfM2QI4zqmnB/B0I=
   dependencies:
     "@popperjs/core" "^2.4.4"
     async-validator "^3.4.0"

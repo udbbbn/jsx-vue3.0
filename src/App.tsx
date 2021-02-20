@@ -31,7 +31,7 @@ export default defineComponent({
                     <ElMain>
                     </ElMain>
                 </ElContainer> */}
-                <FlyCard cardImgArray={[...flyCardArr.value]} remainNum={3} remainCallBack={loadFlyCardImg}></FlyCard>
+                <FlyCard moreLoading cardImgArray={[...flyCardArr.value]} remainNum={3} remainCallBack={loadFlyCardImg}></FlyCard>
             </div>
         )
     }
